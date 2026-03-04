@@ -167,7 +167,7 @@
 
         async function carregarTecnicosGlobais() {
             try {
-                const res = await fetch('http://localhost:3000/api/tecnicos');
+                const res = await fetch('https://suporte-interno.onrender.com/api/tecnicos');
                 listaTecnicos = await res.json();
                 
                 const tbody = document.getElementById('tabela-tecnicos');
@@ -218,7 +218,7 @@
             }
 
             try {
-                const res = await fetch(`http://localhost:3000/api/tecnicos/${id}`, {
+                const res = await fetch(`https://suporte-interno.onrender.com/api/tecnicos/${id}`, {
                     method: 'PUT', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome: novoNome })
                 });
@@ -241,7 +241,7 @@
 
         async function confirmarExclusao() {
             const id = document.getElementById('del-tec-id').value;
-            await fetch(`http://localhost:3000/api/tecnicos/${id}`, { method: 'DELETE' });
+            await fetch(`https://suporte-interno.onrender.com/api/tecnicos/${id}`, { method: 'DELETE' });
             fecharModal('modal-exclusao');
             mostrarAviso('Analista removido.', 'sucesso');
             carregarTelaCompleta();
@@ -265,7 +265,7 @@
             }
 
             try {
-                const res = await fetch('http://localhost:3000/api/tecnicos', {
+                const res = await fetch('https://suporte-interno.onrender.com/api/tecnicos', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome })
                 });
@@ -287,7 +287,7 @@
             if (painelEmUso) return;
 
             try {
-                const res = await fetch('http://localhost:3000/api/chamados');
+                const res = await fetch('https://suporte-interno.onrender.com/api/chamados');
                 const chamados = await res.json();
                 
                 const selecoesPendentes = {};
@@ -364,7 +364,7 @@
                 return mostrarAviso('Atribua um analista antes de mudar o status.', 'erro');
             }
 
-            await fetch(`http://localhost:3000/api/chamados/${id}`, {
+            await fetch(`https://suporte-interno.onrender.com/api/chamados/${id}`, {
                 method: 'PATCH', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tecnico_atribuido: tecnico, status: status })
             });
