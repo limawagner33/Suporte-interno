@@ -108,7 +108,7 @@
     </div>
 
     <script>
-        function mostrarAviso(msg, tipo = 'sucesso') {
+            function mostrarAviso(msg, tipo = 'sucesso') {
             const toast = document.getElementById('container-aviso');
             toast.innerText = msg;
             toast.className = `aviso-toast show ${tipo === 'erro' ? 'bg-erro' : (tipo === 'info' ? 'bg-info' : 'bg-sucesso')}`;
@@ -207,24 +207,28 @@
                 body: JSON.stringify(payload)
             });
             
-            if(res.ok) {
-                sintetizarSomSucesso();
-                mostrarAviso("Chamado aberto com sucesso!", "sucesso");
-                document.getElementById('form-chamado').reset();
-                carregarMeusChamados();
-            } else {
-                mostrarAviso("Falha ao abrir ticket.", "erro");
+            // Tratamento da trava do patrimonio duplicado
+            if (!res.ok) {
+                const erroData = await res.json();
+                return mostrarAviso(erroData.erro, "erro");
             }
+
+            sintetizarSomSucesso();
+            mostrarAviso("Chamado aberto com sucesso!", "sucesso");
+            document.getElementById('form-chamado').reset();
+            carregarMeusChamados();
         });
 
+        // Polling ouvindo o servidor (Atualizacao em Tempo Real)
         setInterval(async () => {
             try {
+                carregarMeusChamados(); // Atualiza a tabela silenciosamente a cada 3s
+
                 const res = await fetch(`http://localhost:3000/api/notificacoes/${usuarioAtual.id}`);
                 const dados = await res.json();
                 if (dados.tocarSom) {
                     sintetizarSomNotificacao(); 
-                    mostrarAviso(`Atencao: Ticket do equipamento ${dados.chamado} foi concluido pela TI.`, 'info');
-                    carregarMeusChamados();
+                    mostrarAviso(`Atenção: Ticket do equipamento ${dados.chamado} foi concluído pela TI.`, 'info');
                 }
             } catch (err) {}
         }, 3000);

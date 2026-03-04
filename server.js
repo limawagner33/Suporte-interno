@@ -70,15 +70,21 @@ app.delete('/api/tecnicos/:id', (req, res) => {
 // --- CHAMADOS ---
 app.post('/api/chamados', (req, res) => {
     const { id_usuario, patrimonio, setor, componente, descricao } = req.body;
-    const sql = `INSERT INTO chamados (id_usuario, patrimonio, setor, componente, descricao) VALUES (?, ?, ?, ?, ?)`;
-    
-    // Agora o erro sobe pro front se der ruim, em vez de silenciar
-    db.run(sql, [id_usuario, patrimonio, setor, componente, descricao], function(err) {
-        if (err) {
-            console.error('[ERRO CHAMADO]', err.message);
-            return res.status(500).json({ erro: 'Falha ao gravar chamado no banco.' });
-        }
-        res.status(201).json({ mensagem: 'Chamado registrado com sucesso.', id: this.lastID });
+    const pat = patrimonio.trim(); // Limpa espacos em branco
+
+    // Regra de Negocio: Verifica se o patrimonio ja tem chamado em aberto ou atribuido
+    db.get(`SELECT id FROM chamados WHERE patrimonio = ? AND status != 'Resolvido'`, [pat], (err, row) => {
+        if (err) return res.status(500).json({ erro: 'Falha na verificacao do banco.' });
+        
+        // Se achou uma linha, significa que o equipamento ja ta na fila
+        if (row) return res.status(400).json({ erro: 'Bloqueado: Este patrimônio já possui um chamado em andamento.' });
+
+        // Se o caminho ta livre, grava o chamado novo
+        const sql = `INSERT INTO chamados (id_usuario, patrimonio, setor, componente, descricao) VALUES (?, ?, ?, ?, ?)`;
+        db.run(sql, [id_usuario, pat, setor, componente, descricao], function(err) {
+            if (err) return res.status(500).json({ erro: 'Falha ao gravar chamado.' });
+            res.status(201).json({ mensagem: 'Chamado registrado com sucesso.', id: this.lastID });
+        });
     });
 });
 
