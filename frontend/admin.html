@@ -157,7 +157,7 @@
         if (!adminAtual || adminAtual.perfil !== 'admin') window.location.href = 'login.html';
 
         let listaTecnicos = [];
-        let ultimoIdConhecido = 0; 
+        let ultimoIdConhecido = null; 
 
         async function carregarTelaCompleta() {
             await carregarTecnicosGlobais();
@@ -288,15 +288,17 @@
                 const tbody = document.getElementById('tabela-admin');
                 tbody.innerHTML = '';
                 
-                // se o id do chamado mais recente for maior que o gravado na memoria, apita!
                 if (chamados.length > 0) {
                     const maiorIdAtual = Math.max(...chamados.map(c => c.id));
                     
-                    if (!ehCarregamentoInicial && ultimoIdConhecido > 0 && maiorIdAtual > ultimoIdConhecido) {
+                    // ele aceita o ID 1
+                    if (!ehCarregamentoInicial && ultimoIdConhecido !== null && maiorIdAtual > ultimoIdConhecido) {
                         sintetizarSomSucesso(); 
                         mostrarAviso('Novo incidente registrado na fila!', 'info');
                     }
                     ultimoIdConhecido = maiorIdAtual; 
+                } else {
+                    ultimoIdConhecido = 0; // Se o banco está vazio, seta como zero
                 }
                 
                 chamados.forEach(c => {
