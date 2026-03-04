@@ -21,22 +21,45 @@ app.get('/api/tecnicos', (req, res) => {
     db.all(`SELECT * FROM tecnicos ORDER BY nome ASC`, [], (err, rows) => res.json(rows || []));
 });
 
+// Cadastro blindado contra duplicidade
 app.post('/api/tecnicos', (req, res) => {
-    db.run(`INSERT INTO tecnicos (nome) VALUES (?)`, [req.body.nome], function(err) {
-        if (err) return res.status(400).json({ erro: 'Nome já existe ou falhou.' });
-        res.status(201).json({ id: this.lastID, nome: req.body.nome });
+    const nome = req.body.nome.trim();
+
+    // A logica do LOWER() garante que "Jonas" e "jonas" sejam a mesma coisa na busca
+    db.get(`SELECT id FROM tecnicos WHERE LOWER(nome) = LOWER(?)`, [nome], (err, row) => {
+        if (err) return res.status(500).json({ erro: 'Erro interno no banco de dados.' });
+        
+        // Se a variavel row existir, significa que o banco achou alguem com esse nome
+        if (row) return res.status(400).json({ erro: 'Nao e possivel, ja tem um analista cadastrado com esse nome.' });
+
+        // Se passou direto, a gente insere
+        db.run(`INSERT INTO tecnicos (nome) VALUES (?)`, [nome], function(err) {
+            if (err) return res.status(500).json({ erro: 'Falha ao salvar tecnico.' });
+            res.status(201).json({ id: this.lastID, nome });
+        });
     });
 });
 
-// Rota pra editar o nome do tecnico
+// Edicao blindada
 app.put('/api/tecnicos/:id', (req, res) => {
-    db.run(`UPDATE tecnicos SET nome = ? WHERE id = ?`, [req.body.nome, req.params.id], err => {
-        if (err) return res.status(500).json({ erro: err.message });
-        res.json({ mensagem: 'Atualizado com sucesso.' });
+    const novoNome = req.body.nome.trim();
+    const id = req.params.id;
+
+    // A mesma logica de busca, mas exclui o id do proprio cara que estamos editando 
+    // (pra ele nao dar erro de duplicidade com o nome dele mesmo caso ele so mude o sobrenome)
+    db.get(`SELECT id FROM tecnicos WHERE LOWER(nome) = LOWER(?) AND id != ?`, [novoNome, id], (err, row) => {
+        if (err) return res.status(500).json({ erro: 'Erro interno.' });
+        
+        if (row) return res.status(400).json({ erro: 'Nao e possivel, ja tem um analista cadastrado com esse nome.' });
+
+        db.run(`UPDATE tecnicos SET nome = ? WHERE id = ?`, [novoNome, id], err => {
+            if (err) return res.status(500).json({ erro: err.message });
+            res.json({ mensagem: 'Atualizado com sucesso.' });
+        });
     });
 });
 
-// Rota pra demitir/excluir o tecnico
+// Excluir tecnico continua igual
 app.delete('/api/tecnicos/:id', (req, res) => {
     db.run(`DELETE FROM tecnicos WHERE id = ?`, [req.params.id], err => {
         if (err) return res.status(500).json({ erro: err.message });
