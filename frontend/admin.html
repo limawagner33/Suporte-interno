@@ -285,6 +285,13 @@
             try {
                 const res = await fetch('http://localhost:3000/api/chamados');
                 const chamados = await res.json();
+                
+                // 1. A MÁGICA: Tira uma "foto" do que você selecionou antes de apagar a tabela
+                const selecoesPendentes = {};
+                document.querySelectorAll('#tabela-admin select').forEach(sel => {
+                    selecoesPendentes[sel.id] = sel.value;
+                });
+
                 const tbody = document.getElementById('tabela-admin');
                 tbody.innerHTML = '';
                 
@@ -298,7 +305,7 @@
                     }
                     ultimoIdConhecido = maiorIdAtual; 
                 } else {
-                    ultimoIdConhecido = 0; // Se o banco está vazio, seta como zero
+                    ultimoIdConhecido = 0; 
                 }
                 
                 chamados.forEach(c => {
@@ -328,6 +335,13 @@
                         </tr>
                     `;
                 });
+
+                // 2. Devolve as seleções pros campos novinhos
+                Object.keys(selecoesPendentes).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = selecoesPendentes[id];
+                });
+
             } catch(e) { console.error("Erro ao carregar chamados", e); }
         }
 
