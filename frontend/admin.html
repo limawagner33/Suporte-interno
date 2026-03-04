@@ -317,9 +317,19 @@
                     let textoBotao = estaEncerrado ? 'Encerrado' : 'Salvar';
 
                     let comboTecnicos = `<option value="" disabled ${!c.tecnico_atribuido ? 'selected' : ''}>Selecione na lista</option>`;
+                    
+                    // Verifica se o dono do chamado ainda faz parte da equipe
+                    let tecnicoAindaTrabalhaAqui = false;
+                    
                     listaTecnicos.forEach(t => {
+                        if (c.tecnico_atribuido === t.nome) tecnicoAindaTrabalhaAqui = true;
                         comboTecnicos += `<option value="${t.nome}" ${c.tecnico_atribuido === t.nome ? 'selected' : ''}>${t.nome}</option>`;
                     });
+
+                    // Se o cara foi excluído do sistema, recria a opção dele no histórico com um aviso!
+                    if (c.tecnico_atribuido && !tecnicoAindaTrabalhaAqui) {
+                        comboTecnicos += `<option value="${c.tecnico_atribuido}" selected>${c.tecnico_atribuido} (Desligado)</option>`;
+                    }
 
                     tbody.innerHTML += `
                         <tr>
