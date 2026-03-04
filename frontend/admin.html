@@ -158,6 +158,7 @@
 
         let listaTecnicos = [];
         let ultimoIdConhecido = null; 
+        let painelEmUso = false
 
         async function carregarTelaCompleta() {
             await carregarTecnicosGlobais();
@@ -282,11 +283,13 @@
         }
 
         async function carregarFila(ehCarregamentoInicial = false) {
+            // Se o usuário está com a caixinha aberta, aborta a atualização para não fechar o menu na cara dele
+            if (painelEmUso) return;
+
             try {
                 const res = await fetch('http://localhost:3000/api/chamados');
                 const chamados = await res.json();
                 
-                // 1. A MÁGICA: Tira uma "foto" do que você selecionou antes de apagar a tabela
                 const selecoesPendentes = {};
                 document.querySelectorAll('#tabela-admin select').forEach(sel => {
                     selecoesPendentes[sel.id] = sel.value;
@@ -298,7 +301,6 @@
                 if (chamados.length > 0) {
                     const maiorIdAtual = Math.max(...chamados.map(c => c.id));
                     
-                    // ele aceita o ID 1
                     if (!ehCarregamentoInicial && ultimoIdConhecido !== null && maiorIdAtual > ultimoIdConhecido) {
                         sintetizarSomSucesso(); 
                         mostrarAviso('Novo incidente registrado na fila!', 'info');
@@ -336,10 +338,16 @@
                     `;
                 });
 
-                // 2. Devolve as seleções pros campos novinhos
                 Object.keys(selecoesPendentes).forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.value = selecoesPendentes[id];
+                });
+
+                // OS OLHEIROS DA TELA: Monitoram se você está clicando nos selects
+                document.querySelectorAll('#tabela-admin select').forEach(sel => {
+                    sel.addEventListener('focus', () => { painelEmUso = true; });  // Abriu a caixa? Pausa o motor!
+                    sel.addEventListener('blur', () => { painelEmUso = false; });   // Clicou fora? Liga o motor!
+                    sel.addEventListener('change', () => { painelEmUso = false; }); // Escolheu a opção? Liga o motor!
                 });
 
             } catch(e) { console.error("Erro ao carregar chamados", e); }
