@@ -172,7 +172,7 @@
         document.getElementById('nome-usuario').innerText = usuarioAtual.nome;
 
         async function carregarMeusChamados() {
-            const res = await fetch(`https://suporte-interno.onrender.com/api/chamados?id_usuario=${usuarioAtual.id}`);
+            const res = await fetch(`http://localhost:3000/api/chamados?id_usuario=${usuarioAtual.id}`);
             const chamados = await res.json();
             const tbody = document.getElementById('tabela-meus-chamados');
             tbody.innerHTML = '';
@@ -202,7 +202,7 @@
                 descricao: document.getElementById('descricao').value
             };
 
-            const res = await fetch('https://suporte-interno.onrender.com/api/chamados', {
+            const res = await fetch('http://localhost:3000/api/chamados', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
@@ -219,7 +219,7 @@
 
         setInterval(async () => {
             try {
-                const res = await fetch(`https://suporte-interno.onrender.com/api/notificacoes/${usuarioAtual.id}`);
+                const res = await fetch(`http://localhost:3000/api/notificacoes/${usuarioAtual.id}`);
                 const dados = await res.json();
                 if (dados.tocarSom) {
                     sintetizarSomNotificacao(); 
