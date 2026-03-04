@@ -76,15 +76,15 @@
             </div>
             <div class="modal-botoes">
                 <button class="btn-cancelar" onclick="fecharModal('modal-edicao')">Cancelar</button>
-                <button onclick="confirmarEdicao()">Salvar Alteração</button>
+                <button onclick="confirmarEdicao()">Salvar Alteracao</button>
             </div>
         </div>
     </div>
 
     <div id="modal-exclusao" class="modal-overlay">
         <div class="modal-box">
-            <h3>Confirmar Remoção</h3>
-            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Tem certeza que deseja remover este analista do sistema? Essa ação nao pode ser desfeita.</p>
+            <h3>Confirmar Remocao</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Tem certeza que deseja remover este analista do sistema? Essa acao nao pode ser desfeita.</p>
             <input type="hidden" id="del-tec-id">
             <div class="modal-botoes">
                 <button class="btn-cancelar" onclick="fecharModal('modal-exclusao')">Cancelar</button>
@@ -95,12 +95,12 @@
 
     <div class="container">
         <div class="header-flex">
-            <h2>Centro de Operações (NOC)</h2>
-            <button onclick="sair()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; width: auto;">Finalizar Sessão</button>
+            <h2>Centro de Operacoes (NOC)</h2>
+            <button onclick="sair()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; width: auto;">Finalizar Sessao</button>
         </div>
 
         <div class="card">
-            <h3 style="margin-top: 0;">Gestão de Equipe (Analistas)</h3>
+            <h3 style="margin-top: 0;">Gestao de Equipe (Analistas)</h3>
             
             <div class="cadastro-flex">
                 <div class="form-group">
@@ -111,7 +111,7 @@
 
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Nome do Técnico</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Nome do Tecnico</th><th>Acoes</th></tr></thead>
                     <tbody id="tabela-tecnicos"></tbody>
                 </table>
             </div>
@@ -121,7 +121,7 @@
             <h3 style="margin-top: 0;">Fila de Incidentes</h3>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Origem</th><th>Ativo / Categoria</th><th>Atribuição</th><th>Status</th><th>Ação</th></tr></thead>
+                    <thead><tr><th>Origem</th><th>Ativo / Categoria</th><th>Atribuicao</th><th>Status</th><th>Acao</th></tr></thead>
                     <tbody id="tabela-admin"></tbody>
                 </table>
             </div>
@@ -164,22 +164,24 @@
         }
 
         async function carregarTecnicosGlobais() {
-            const res = await fetch('https://suporte-interno.onrender.com/api/tecnicos');
-            listaTecnicos = await res.json();
-            
-            const tbody = document.getElementById('tabela-tecnicos');
-            tbody.innerHTML = '';
-            listaTecnicos.forEach(t => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${t.nome}</strong></td>
-                        <td>
-                            <button class="btn-acao btn-editar" onclick="abrirModalEdicao(${t.id}, '${t.nome}')">Editar</button>
-                            <button class="btn-acao btn-excluir" onclick="abrirModalExclusao(${t.id})">Remover</button>
-                        </td>
-                    </tr>
-                `;
-            });
+            try {
+                const res = await fetch('http://localhost:3000/api/tecnicos');
+                listaTecnicos = await res.json();
+                
+                const tbody = document.getElementById('tabela-tecnicos');
+                tbody.innerHTML = '';
+                listaTecnicos.forEach(t => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${t.nome}</strong></td>
+                            <td>
+                                <button class="btn-acao btn-editar" onclick="abrirModalEdicao(${t.id}, '${t.nome}')">Editar</button>
+                                <button class="btn-acao btn-excluir" onclick="abrirModalExclusao(${t.id})">Remover</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(e) { console.error("Erro ao carregar tecnicos:", e); }
         }
 
         function fecharModal(idModal) { document.getElementById(idModal).classList.remove('ativo'); }
@@ -213,20 +215,21 @@
                 return;
             }
 
-            const res = await fetch(`http://localhost:3000/api/tecnicos/${id}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome: novoNome })
-            });
+            try {
+                const res = await fetch(`http://localhost:3000/api/tecnicos/${id}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome: novoNome })
+                });
 
-            // Mesma trava de seguranca pra edicao dentro do Modal
-            if (!res.ok) {
-                const dadosErro = await res.json();
-                return mostrarAviso(dadosErro.erro, 'erro');
-            }
+                if (!res.ok) {
+                    const dadosErro = await res.json();
+                    return mostrarAviso(dadosErro.erro, 'erro');
+                }
 
-            fecharModal('modal-edicao');
-            mostrarAviso('Nome atualizado com sucesso.');
-            carregarTelaCompleta();
+                fecharModal('modal-edicao');
+                mostrarAviso('Nome atualizado com sucesso.');
+                carregarTelaCompleta();
+            } catch(e) { mostrarAviso('Erro de conexão.', 'erro'); }
         }
 
         function abrirModalExclusao(id) {
@@ -236,7 +239,7 @@
 
         async function confirmarExclusao() {
             const id = document.getElementById('del-tec-id').value;
-            await fetch(`https://suporte-interno.onrender.com/api/tecnicos/${id}`, { method: 'DELETE' });
+            await fetch(`http://localhost:3000/api/tecnicos/${id}`, { method: 'DELETE' });
             fecharModal('modal-exclusao');
             mostrarAviso('Analista removido.', 'sucesso');
             carregarTelaCompleta();
@@ -259,58 +262,59 @@
                 return;
             }
 
-            // Batendo na API e guardando a resposta
-            const res = await fetch('http://localhost:3000/api/tecnicos', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome })
-            });
+            try {
+                const res = await fetch('http://localhost:3000/api/tecnicos', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome })
+                });
 
-            // Se o res.ok for falso (ou seja, bateu no nosso erro 400), a gente trava tudo e mostra a msg vermelha
-            if (!res.ok) {
-                const dadosErro = await res.json();
-                return mostrarAviso(dadosErro.erro, 'erro');
-            }
+                if (!res.ok) {
+                    const dadosErro = await res.json();
+                    return mostrarAviso(dadosErro.erro, 'erro');
+                }
 
-            // Se deu tudo certo, segue o jogo normal
-            input.value = '';
-            sintetizarSomSucesso();
-            mostrarAviso('Analista registrado com sucesso!');
-            carregarTelaCompleta(); 
+                input.value = '';
+                sintetizarSomSucesso();
+                mostrarAviso('Analista registrado com sucesso!');
+                carregarTelaCompleta(); 
+            } catch(e) { mostrarAviso('Erro de conexão.', 'erro'); }
         }
 
         async function carregarFila() {
-            const res = await fetch('https://suporte-interno.onrender.com/api/chamados');
-            const chamados = await res.json();
-            const tbody = document.getElementById('tabela-admin');
-            tbody.innerHTML = '';
-            
-            chamados.forEach(c => {
-                let estaEncerrado = c.status === 'Resolvido';
-                let tagTravamento = estaEncerrado ? 'disabled' : '';
-                let corBotao = estaEncerrado ? '#475569' : '#10b981';
-                let textoBotao = estaEncerrado ? 'Encerrado' : 'Salvar';
+            try {
+                const res = await fetch('http://localhost:3000/api/chamados');
+                const chamados = await res.json();
+                const tbody = document.getElementById('tabela-admin');
+                tbody.innerHTML = '';
+                
+                chamados.forEach(c => {
+                    let estaEncerrado = c.status === 'Resolvido';
+                    let tagTravamento = estaEncerrado ? 'disabled' : '';
+                    let corBotao = estaEncerrado ? '#475569' : '#10b981';
+                    let textoBotao = estaEncerrado ? 'Encerrado' : 'Salvar';
 
-                let comboTecnicos = `<option value="" disabled ${!c.tecnico_atribuido ? 'selected' : ''}>Selecione na lista</option>`;
-                listaTecnicos.forEach(t => {
-                    comboTecnicos += `<option value="${t.nome}" ${c.tecnico_atribuido === t.nome ? 'selected' : ''}>${t.nome}</option>`;
+                    let comboTecnicos = `<option value="" disabled ${!c.tecnico_atribuido ? 'selected' : ''}>Selecione na lista</option>`;
+                    listaTecnicos.forEach(t => {
+                        comboTecnicos += `<option value="${t.nome}" ${c.tecnico_atribuido === t.nome ? 'selected' : ''}>${t.nome}</option>`;
+                    });
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span style="color: var(--primary); font-weight: 600;">${c.setor}</span></td>
+                            <td><strong>${c.patrimonio}</strong> (${c.componente})<br><small style="color: #94a3b8">${c.descricao}</small></td>
+                            <td><select id="tec-${c.id}" ${tagTravamento}>${comboTecnicos}</select></td>
+                            <td>
+                                <select id="status-${c.id}" ${tagTravamento}>
+                                    <option value="Aberto" disabled ${c.status === 'Aberto' ? 'selected' : ''}>Aberto (Novo)</option>
+                                    <option value="Atribuído" ${c.status === 'Atribuído' ? 'selected' : ''}>Atribuido</option>
+                                    <option value="Resolvido" ${c.status === 'Resolvido' ? 'selected' : ''}>Resolvido</option>
+                                </select>
+                            </td>
+                            <td><button onclick="atualizarChamado(${c.id})" ${tagTravamento} style="background-color: ${corBotao}">${textoBotao}</button></td>
+                        </tr>
+                    `;
                 });
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><span style="color: var(--primary); font-weight: 600;">${c.setor}</span></td>
-                        <td><strong>${c.patrimonio}</strong> (${c.componente})<br><small style="color: #94a3b8">${c.descricao}</small></td>
-                        <td><select id="tec-${c.id}" ${tagTravamento}>${comboTecnicos}</select></td>
-                        <td>
-                            <select id="status-${c.id}" ${tagTravamento}>
-                                <option value="Aberto" disabled ${c.status === 'Aberto' ? 'selected' : ''}>Aberto (Novo)</option>
-                                <option value="Atribuído" ${c.status === 'Atribuído' ? 'selected' : ''}>Atribuido</option>
-                                <option value="Resolvido" ${c.status === 'Resolvido' ? 'selected' : ''}>Resolvido</option>
-                            </select>
-                        </td>
-                        <td><button onclick="atualizarChamado(${c.id})" ${tagTravamento} style="background-color: ${corBotao}">${textoBotao}</button></td>
-                    </tr>
-                `;
-            });
+            } catch(e) { console.error("Erro ao carregar chamados", e); }
         }
 
         async function atualizarChamado(id) {
@@ -321,7 +325,7 @@
                 return mostrarAviso('Atribua um analista antes de mudar o status.', 'erro');
             }
 
-            await fetch(`https://suporte-interno.onrender.com/api/chamados/${id}`, {
+            await fetch(`http://localhost:3000/api/chamados/${id}`, {
                 method: 'PATCH', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tecnico_atribuido: tecnico, status: status })
             });
