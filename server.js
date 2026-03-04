@@ -30,11 +30,11 @@ app.post('/api/tecnicos', (req, res) => {
         if (err) return res.status(500).json({ erro: 'Erro interno no banco de dados.' });
         
         // Se a variavel row existir, significa que o banco achou alguem com esse nome
-        if (row) return res.status(400).json({ erro: 'Nao e possivel, ja tem um analista cadastrado com esse nome.' });
+        if (row) return res.status(400).json({ erro: 'Não é possível, já existe um analista cadastrado com esse nome.' });
 
         // Se passou direto, a gente insere
         db.run(`INSERT INTO tecnicos (nome) VALUES (?)`, [nome], function(err) {
-            if (err) return res.status(500).json({ erro: 'Falha ao salvar tecnico.' });
+            if (err) return res.status(500).json({ erro: 'Falha ao salvar técnico.' });
             res.status(201).json({ id: this.lastID, nome });
         });
     });
