@@ -213,7 +213,7 @@
                 return;
             }
 
-            const res = await fetch(`https://suporte-interno.onrender.com/api/tecnicos/${id}`, {
+            const res = await fetch(`http://localhost:3000/api/tecnicos/${id}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome: novoNome })
             });
@@ -260,7 +260,7 @@
             }
 
             // Batendo na API e guardando a resposta
-            const res = await fetch('https://suporte-interno.onrender.com/api/tecnicos', {
+            const res = await fetch('http://localhost:3000/api/tecnicos', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome })
             });
@@ -277,17 +277,6 @@
             mostrarAviso('Analista registrado com sucesso!');
             carregarTelaCompleta(); 
         }
-
-            await fetch('https://suporte-interno.onrender.com/api/tecnicos', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome })
-            });
-
-            input.value = '';
-            sintetizarSomSucesso();
-            mostrarAviso('Analista registrado com sucesso!');
-            carregarTelaCompleta(); 
-        
 
         async function carregarFila() {
             const res = await fetch('https://suporte-interno.onrender.com/api/chamados');
