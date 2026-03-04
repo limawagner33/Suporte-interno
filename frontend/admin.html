@@ -213,10 +213,17 @@
                 return;
             }
 
-            await fetch(`https://suporte-interno.onrender.com/api/tecnicos/${id}`, {
+            const res = await fetch(`https://suporte-interno.onrender.com/api/tecnicos/${id}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome: novoNome })
             });
+
+            // Mesma trava de seguranca pra edicao dentro do Modal
+            if (!res.ok) {
+                const dadosErro = await res.json();
+                return mostrarAviso(dadosErro.erro, 'erro');
+            }
+
             fecharModal('modal-edicao');
             mostrarAviso('Nome atualizado com sucesso.');
             carregarTelaCompleta();
@@ -252,6 +259,25 @@
                 return;
             }
 
+            // Batendo na API e guardando a resposta
+            const res = await fetch('https://suporte-interno.onrender.com/api/tecnicos', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome })
+            });
+
+            // Se o res.ok for falso (ou seja, bateu no nosso erro 400), a gente trava tudo e mostra a msg vermelha
+            if (!res.ok) {
+                const dadosErro = await res.json();
+                return mostrarAviso(dadosErro.erro, 'erro');
+            }
+
+            // Se deu tudo certo, segue o jogo normal
+            input.value = '';
+            sintetizarSomSucesso();
+            mostrarAviso('Analista registrado com sucesso!');
+            carregarTelaCompleta(); 
+        }
+
             await fetch('https://suporte-interno.onrender.com/api/tecnicos', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome })
@@ -261,7 +287,7 @@
             sintetizarSomSucesso();
             mostrarAviso('Analista registrado com sucesso!');
             carregarTelaCompleta(); 
-        }
+        
 
         async function carregarFila() {
             const res = await fetch('https://suporte-interno.onrender.com/api/chamados');
