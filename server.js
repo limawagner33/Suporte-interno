@@ -50,7 +50,7 @@ app.put('/api/tecnicos/:id', (req, res) => {
     db.get(`SELECT id FROM tecnicos WHERE LOWER(nome) = LOWER(?) AND id != ?`, [novoNome, id], (err, row) => {
         if (err) return res.status(500).json({ erro: 'Erro interno.' });
         
-        if (row) return res.status(400).json({ erro: 'Nao e possivel, ja tem um analista cadastrado com esse nome.' });
+        if (row) return res.status(400).json({ erro: 'Nao é possível, já existe um analista cadastrado com esse nome.' });
 
         db.run(`UPDATE tecnicos SET nome = ? WHERE id = ?`, [novoNome, id], err => {
             if (err) return res.status(500).json({ erro: err.message });
