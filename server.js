@@ -11,7 +11,7 @@ app.post('/api/login', (req, res) => {
     const { login, senha } = req.body;
     db.get(`SELECT id, nome, setor, perfil FROM usuarios WHERE login = ? AND senha = ?`, [login, senha], (err, row) => {
         if (err) return res.status(500).json({ erro: 'Erro interno no banco.' });
-        if (!row) return res.status(401).json({ erro: 'Credenciais invalidas. Tente novamente.' });
+        if (!row) return res.status(401).json({ erro: 'Credenciais inválidas. Tente novamente.' });
         res.json({ mensagem: 'Login aprovado.', usuario: row });
     });
 });
@@ -23,7 +23,7 @@ app.get('/api/tecnicos', (req, res) => {
 
 app.post('/api/tecnicos', (req, res) => {
     db.run(`INSERT INTO tecnicos (nome) VALUES (?)`, [req.body.nome], function(err) {
-        if (err) return res.status(400).json({ erro: 'Nome ja existe ou falhou.' });
+        if (err) return res.status(400).json({ erro: 'Nome já existe ou falhou.' });
         res.status(201).json({ id: this.lastID, nome: req.body.nome });
     });
 });

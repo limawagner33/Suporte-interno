@@ -76,15 +76,15 @@
             </div>
             <div class="modal-botoes">
                 <button class="btn-cancelar" onclick="fecharModal('modal-edicao')">Cancelar</button>
-                <button onclick="confirmarEdicao()">Salvar Alteracao</button>
+                <button onclick="confirmarEdicao()">Salvar Alteração</button>
             </div>
         </div>
     </div>
 
     <div id="modal-exclusao" class="modal-overlay">
         <div class="modal-box">
-            <h3>Confirmar Remocao</h3>
-            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Tem certeza que deseja remover este analista do sistema? Essa acao nao pode ser desfeita.</p>
+            <h3>Confirmar Remoção</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Tem certeza que deseja remover este analista do sistema? Essa ação nao pode ser desfeita.</p>
             <input type="hidden" id="del-tec-id">
             <div class="modal-botoes">
                 <button class="btn-cancelar" onclick="fecharModal('modal-exclusao')">Cancelar</button>
@@ -95,12 +95,12 @@
 
     <div class="container">
         <div class="header-flex">
-            <h2>Centro de Operacoes (NOC)</h2>
-            <button onclick="sair()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; width: auto;">Finalizar Sessao</button>
+            <h2>Centro de Operações (NOC)</h2>
+            <button onclick="sair()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; width: auto;">Finalizar Sessão</button>
         </div>
 
         <div class="card">
-            <h3 style="margin-top: 0;">Gestao de Equipe (Analistas)</h3>
+            <h3 style="margin-top: 0;">Gestão de Equipe (Analistas)</h3>
             
             <div class="cadastro-flex">
                 <div class="form-group">
@@ -111,7 +111,7 @@
 
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Nome do Tecnico</th><th>Acoes</th></tr></thead>
+                    <thead><tr><th>Nome do Técnico</th><th>Ações</th></tr></thead>
                     <tbody id="tabela-tecnicos"></tbody>
                 </table>
             </div>
@@ -121,7 +121,7 @@
             <h3 style="margin-top: 0;">Fila de Incidentes</h3>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Origem</th><th>Ativo / Categoria</th><th>Atribuicao</th><th>Status</th><th>Acao</th></tr></thead>
+                    <thead><tr><th>Origem</th><th>Ativo / Categoria</th><th>Atribuição</th><th>Status</th><th>Ação</th></tr></thead>
                     <tbody id="tabela-admin"></tbody>
                 </table>
             </div>
