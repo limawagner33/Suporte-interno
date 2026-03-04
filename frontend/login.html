@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SP Interno | Acesso Corporativo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f8fafc; --border: #334155; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 1rem; box-sizing: border-box; }
+        .login-box { background: var(--card); padding: 3rem; border-radius: 16px; border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .login-box:hover { transform: translateY(-5px); box-shadow: 0 20px 30px -5px rgba(0,0,0,0.6); }
+        
+        .form-group { text-align: left; margin-bottom: 1.2rem; display: flex; flex-direction: column; }
+        input { width: 100%; padding: 1rem; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 8px; box-sizing: border-box; outline: none; transition: all 0.2s; }
+        input:focus { border-color: var(--primary); }
+        
+        .input-erro { border-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.05) !important; animation: tremer 0.3s; }
+        .msg-erro-campo { color: #ef4444; font-size: 0.75rem; font-weight: 500; margin-top: 0.4rem; display: block; }
+        @keyframes tremer { 0% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-4px); } 100% { transform: translateX(0); } }
+
+        button { width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s; margin-top: 0.5rem; }
+        button:hover { background: #2563eb; }
+        
+        .aviso-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 10px 15px rgba(0,0,0,0.3); transform: translateX(150%); transition: transform 0.3s ease; z-index: 9999; }
+        .aviso-toast.show { transform: translateX(0); }
+        .bg-erro { background-color: #ef4444; } .bg-sucesso { background-color: #10b981; }
+
+        /* Estilo da assinatura digital no rodape */
+        .social-footer { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: center; gap: 1.5rem; font-size: 0.85rem; font-weight: 500; }
+        .social-footer a { color: #94a3b8; text-decoration: none; transition: color 0.2s; }
+        .social-footer a:hover { color: var(--primary); }
+
+        @media (max-width: 480px) {
+            .login-box { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="container-aviso" class="aviso-toast"></div>
+
+    <div class="login-box">
+        <h1 style="color: var(--primary); margin-bottom: 0.5rem;">Suporte Interno</h1>
+        <p style="color: #94a3b8; margin-bottom: 2rem;">Helpdesk Central</p>
+        
+        <form id="form-login" novalidate>
+            <div class="form-group">
+                <input type="text" id="login" placeholder="Usuario de rede" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="senha" placeholder="Senha" required>
+            </div>
+            <button type="submit">Autenticar</button>
+        </form>
+        <p style="margin-top: 1.5rem; font-size: 0.8rem; color: #f59e0b;">
+            Testes: <b>admin / 123</b> (Suporte) ou <b>joao / 123</b> (Comum)
+        </p>
+        
+        <div class="social-footer">
+            
+            <a href="https://www.linkedin.com/in/wagner-matos-de-lima/" target="_blank">LinkedIn</a>
+            <a href="https://github.com/limawagner33" target="_blank">GitHub</a>
+            <a href="mailto:wagnerlima10444@gmail.com">E-mail</a>
+        </div>
+        <p style="margin-top: 1.5rem; font-size: 0.8rem;"> Desenvolvido por: <b>Wagner Lima</b> </p>
+    </div>
+
+    <script>
+        function mostrarAviso(msg, tipo = 'sucesso') {
+            const toast = document.getElementById('container-aviso');
+            toast.innerText = msg;
+            toast.className = `aviso-toast show ${tipo === 'erro' ? 'bg-erro' : 'bg-sucesso'}`;
+            setTimeout(() => { toast.className = 'aviso-toast'; }, 4000);
+        }
+
+        function validarFormulario(form) {
+            let valido = true;
+            form.querySelectorAll('.msg-erro-campo').forEach(el => el.remove());
+            form.querySelectorAll('.input-erro').forEach(el => el.classList.remove('input-erro'));
+
+            form.querySelectorAll('[required]').forEach(campo => {
+                if (!campo.value.trim()) {
+                    valido = false;
+                    campo.classList.add('input-erro');
+                    const msg = document.createElement('span');
+                    msg.className = 'msg-erro-campo';
+                    msg.innerText = '* Por favor, preencha este campo.';
+                    campo.parentNode.appendChild(msg);
+                }
+            });
+            return valido;
+        }
+
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!validarFormulario(e.target)) return;
+
+            const login = document.getElementById('login').value;
+            const senha = document.getElementById('senha').value;
+
+            try {
+                const res = await fetch('https://suporte-interno.onrender.com/api/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login, senha })
+                });
+                const dados = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('usuarioSysManager', JSON.stringify(dados.usuario));
+                    sessionStorage.setItem('loginRecente', 'true');
+                    window.location.href = dados.usuario.perfil === 'admin' ? 'admin.html' : 'comum.html';
+                } else {
+                    mostrarAviso(dados.erro, 'erro');
+                }
+            } catch (err) {
+                mostrarAviso("Servidor fora do ar.", 'erro');
+            }
+        });
+    </script>
+</body>
+</html>

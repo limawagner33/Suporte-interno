@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Colaborador</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f8fafc; --border: #334155; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 2rem; margin: 0; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* Flexbox do topo */
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        
+        .card { background: var(--card); padding: 2rem; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+        
+        .form-group { display: flex; flex-direction: column; margin-bottom: 1rem; width: 100%; }
+        input, select { padding: 1rem; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; transition: all 0.2s; }
+        input:focus, select:focus { border-color: var(--primary); }
+        
+        .input-erro { border-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.05) !important; animation: tremer 0.3s; }
+        .msg-erro-campo { color: #ef4444; font-size: 0.75rem; font-weight: 500; margin-top: 0.4rem; display: block; }
+        @keyframes tremer { 0% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-4px); } 100% { transform: translateX(0); } }
+
+        button { padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; transition: background 0.2s; }
+        button:hover { background: #2563eb; }
+        
+        /* Ajuste nativo pra tabelas nao quebrarem o layout mobile */
+        .table-wrapper { overflow-x: auto; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; min-width: 600px; }
+        th, td { padding: 1.2rem; border-bottom: 1px solid var(--border); text-align: left; }
+        .status { padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        
+        .aviso-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 10px 15px rgba(0,0,0,0.3); transform: translateX(150%); transition: transform 0.3s ease; z-index: 9999; }
+        .aviso-toast.show { transform: translateX(0); }
+        .bg-erro { background-color: #ef4444; } .bg-sucesso { background-color: #10b981; } .bg-info { background-color: var(--primary); }
+
+        /* Media Queries - Deixando o sistema responsivo */
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .header-flex { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .form-grid { grid-template-columns: 1fr; }
+            .card { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="container-aviso" class="aviso-toast"></div>
+
+    <div class="container">
+        <div class="header-flex">
+            <h2>Ola, <span id="nome-usuario" style="color: var(--primary);"></span></h2>
+            <button onclick="sair()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; width: auto; padding: 0.5rem 1.5rem;">Desconectar</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0;">Reportar Novo Incidente</h3>
+            <form id="form-chamado" novalidate>
+                <div class="form-group">
+                    <input type="text" id="patrimonio" placeholder="Codigo do Patrimonio (ex: NTBK-001)" required>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <select id="setor" required>
+                            <option value="" disabled selected>Selecione seu Setor</option>
+                            <option value="Administrativo">Administrativo</option>
+                            <option value="Financeiro">Financeiro</option>
+                            <option value="RH">Recursos Humanos</option>
+                            <option value="Secretaria">Secretaria</option>
+                            <option value="Seguranca">Seguranca</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <select id="componente" required>
+                            <option value="" disabled selected>Categoria do Problema</option>
+                            <option value="Software">Software (Sistema, OS)</option>
+                            <option value="Hardware">Hardware (Gabinete, Pecas)</option>
+                            <option value="Monitor">Monitor</option>
+                            <option value="Mouse / Teclado">Mouse / Teclado</option>
+                            <option value="Rede / Internet">Rede / Internet</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <input type="text" id="descricao" placeholder="Descreva o defeito detalhadamente" required>
+                </div>
+                
+                <button type="submit">Registrar Ticket</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0;">Meus Registros</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Patrimonio</th><th>Detalhes</th><th>Status</th><th>Analista</th></tr></thead>
+                    <tbody id="tabela-meus-chamados"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function mostrarAviso(msg, tipo = 'sucesso') {
+            const toast = document.getElementById('container-aviso');
+            toast.innerText = msg;
+            toast.className = `aviso-toast show ${tipo === 'erro' ? 'bg-erro' : (tipo === 'info' ? 'bg-info' : 'bg-sucesso')}`;
+            setTimeout(() => { toast.className = 'aviso-toast'; }, 5000);
+        }
+
+        function sintetizarSomSucesso() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.1); 
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } catch (error) {}
+        }
+
+        function sintetizarSomNotificacao() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } catch (error) {}
+        }
+
+        function validarFormulario(form) {
+            let valido = true;
+            form.querySelectorAll('.msg-erro-campo').forEach(el => el.remove());
+            form.querySelectorAll('.input-erro').forEach(el => el.classList.remove('input-erro'));
+
+            form.querySelectorAll('[required]').forEach(campo => {
+                if (!campo.value.trim()) {
+                    valido = false;
+                    campo.classList.add('input-erro');
+                    const msg = document.createElement('span');
+                    msg.className = 'msg-erro-campo';
+                    msg.innerText = '* Por favor, preencha este campo.';
+                    campo.parentNode.appendChild(msg);
+                }
+            });
+            return valido;
+        }
+
+        const usuarioAtual = JSON.parse(localStorage.getItem('usuarioSysManager'));
+        if (!usuarioAtual || usuarioAtual.perfil !== 'comum') window.location.href = 'login.html';
+        document.getElementById('nome-usuario').innerText = usuarioAtual.nome;
+
+        async function carregarMeusChamados() {
+            const res = await fetch(`https://suporte-interno.onrender.com/api/chamados?id_usuario=${usuarioAtual.id}`);
+            const chamados = await res.json();
+            const tbody = document.getElementById('tabela-meus-chamados');
+            tbody.innerHTML = '';
+            
+            chamados.forEach(c => {
+                let corStatus = c.status === 'Resolvido' ? '#10b981' : (c.status === 'Atribuído' ? '#3b82f6' : '#f59e0b');
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${c.patrimonio}</strong></td>
+                        <td>${c.componente} <br><small style="color: #94a3b8">${c.descricao}</small></td>
+                        <td><span class="status" style="background: ${corStatus}33; color: ${corStatus}">${c.status}</span></td>
+                        <td>${c.tecnico_atribuido || 'Aguardando fila'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('form-chamado').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!validarFormulario(e.target)) return;
+
+            const payload = {
+                id_usuario: usuarioAtual.id,
+                setor: document.getElementById('setor').value,
+                componente: document.getElementById('componente').value,
+                patrimonio: document.getElementById('patrimonio').value,
+                descricao: document.getElementById('descricao').value
+            };
+
+            const res = await fetch('https://suporte-interno.onrender.com/api/chamados', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if(res.ok) {
+                sintetizarSomSucesso();
+                mostrarAviso("Chamado aberto com sucesso!", "sucesso");
+                document.getElementById('form-chamado').reset();
+                carregarMeusChamados();
+            } else {
+                mostrarAviso("Falha ao abrir ticket.", "erro");
+            }
+        });
+
+        setInterval(async () => {
+            try {
+                const res = await fetch(`https://suporte-interno.onrender.com/api/notificacoes/${usuarioAtual.id}`);
+                const dados = await res.json();
+                if (dados.tocarSom) {
+                    sintetizarSomNotificacao(); 
+                    mostrarAviso(`Atencao: Ticket do equipamento ${dados.chamado} foi concluido pela TI.`, 'info');
+                    carregarMeusChamados();
+                }
+            } catch (err) {}
+        }, 3000);
+
+        function sair() { localStorage.removeItem('usuarioSysManager'); window.location.href = 'login.html'; }
+        
+        window.onload = () => {
+            carregarMeusChamados();
+            if (sessionStorage.getItem('loginRecente')) {
+                mostrarAviso('Login bem-sucedido!', 'sucesso');
+                sintetizarSomSucesso();
+                sessionStorage.removeItem('loginRecente');
+            }
+        };
+    </script>
+</body>
+</html>

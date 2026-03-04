@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOC | Suporte Central</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --text: #f8fafc; --border: #334155; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 2rem; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        
+        .card { background: var(--card); padding: 2rem; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+        
+        .form-group { display: flex; flex-direction: column; flex: 1; margin: 0; }
+        
+        /* Ajuste nativo pra tabelas mobile */
+        .table-wrapper { overflow-x: auto; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; min-width: 700px; }
+        th, td { padding: 1.2rem; border-bottom: 1px solid var(--border); text-align: left; }
+        
+        select, input { padding: 0.8rem; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; transition: border-color 0.2s; width: 100%; box-sizing: border-box;}
+        select:focus, input:focus { border-color: var(--primary); }
+        select:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; border-color: transparent; }
+        
+        .input-erro { border-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.05) !important; animation: tremer 0.3s; }
+        .msg-erro-campo { color: #ef4444; font-size: 0.75rem; font-weight: 500; margin-top: 0.4rem; display: block; }
+        @keyframes tremer { 0% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-4px); } 100% { transform: translateX(0); } }
+
+        button { padding: 0.8rem 1.2rem; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.2s; height: fit-content; }
+        button:hover:not(:disabled) { background: #059669; }
+        button:disabled { cursor: not-allowed; opacity: 0.7; }
+        .btn-acao { padding: 0.5rem 1rem; font-size: 0.85rem; margin-right: 0.5rem; margin-bottom: 0.5rem; }
+        .btn-editar { background-color: var(--primary); }
+        .btn-excluir { background-color: #ef4444; }
+        .btn-cancelar { background-color: transparent; border: 1px solid var(--border); }
+        .btn-cancelar:hover { background-color: #334155; }
+
+        .aviso-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 10px 15px rgba(0,0,0,0.3); transform: translateX(150%); transition: transform 0.3s ease; z-index: 9999; }
+        .aviso-toast.show { transform: translateX(0); }
+        .bg-erro { background-color: #ef4444; } .bg-sucesso { background-color: #10b981; }
+
+        /* Modal / Sobretela */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: flex; justify-content: center; align-items: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(4px); padding: 1rem; box-sizing: border-box; }
+        .modal-overlay.ativo { opacity: 1; pointer-events: auto; }
+        .modal-box { background: var(--card); padding: 2rem; border-radius: 16px; width: 100%; max-width: 400px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); transform: translateY(-20px); transition: transform 0.3s ease; box-sizing: border-box; }
+        .modal-overlay.ativo .modal-box { transform: translateY(0); }
+        .modal-box h3 { margin-top: 0; color: var(--text); margin-bottom: 1.5rem; }
+        .modal-botoes { display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end; flex-wrap: wrap; }
+
+        .cadastro-flex { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-start; }
+
+        /* Responsividade pra salvar o Admin no oncall do final de semana (mobile) */
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .header-flex { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .cadastro-flex { flex-direction: column; }
+            .cadastro-flex button { width: 100%; }
+            .card { padding: 1.5rem; }
+            .modal-botoes button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="container-aviso" class="aviso-toast"></div>
+
+    <div id="modal-edicao" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Editar Analista</h3>
+            <div class="form-group" id="grupo-edicao">
+                <input type="hidden" id="edit-tec-id">
+                <input type="text" id="edit-tec-nome" placeholder="Novo nome do tecnico">
+            </div>
+            <div class="modal-botoes">
+                <button class="btn-cancelar" onclick="fecharModal('modal-edicao')">Cancelar</button>
+                <button onclick="confirmarEdicao()">Salvar Alteracao</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-exclusao" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Confirmar Remocao</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Tem certeza que deseja remover este analista do sistema? Essa acao nao pode ser desfeita.</p>
+            <input type="hidden" id="del-tec-id">
+            <div class="modal-botoes">
+                <button class="btn-cancelar" onclick="fecharModal('modal-exclusao')">Cancelar</button>
+                <button style="background: #ef4444;" onclick="confirmarExclusao()">Sim, Remover</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header-flex">
+            <h2>Centro de Operacoes (NOC)</h2>
+            <button onclick="sair()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; width: auto;">Finalizar Sessao</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0;">Gestao de Equipe (Analistas)</h3>
+            
+            <div class="cadastro-flex">
+                <div class="form-group">
+                    <input type="text" id="novo-tecnico" placeholder="Nome do Analista">
+                </div>
+                <button onclick="salvarTecnico()">Registrar Analista</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Nome do Tecnico</th><th>Acoes</th></tr></thead>
+                    <tbody id="tabela-tecnicos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top: 0;">Fila de Incidentes</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Origem</th><th>Ativo / Categoria</th><th>Atribuicao</th><th>Status</th><th>Acao</th></tr></thead>
+                    <tbody id="tabela-admin"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function mostrarAviso(msg, tipo = 'sucesso') {
+            const toast = document.getElementById('container-aviso');
+            toast.innerText = msg;
+            toast.className = `aviso-toast show ${tipo === 'erro' ? 'bg-erro' : 'bg-sucesso'}`;
+            setTimeout(() => { toast.className = 'aviso-toast'; }, 4000);
+        }
+
+        function sintetizarSomSucesso() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.1); 
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } catch (error) {}
+        }
+
+        const adminAtual = JSON.parse(localStorage.getItem('usuarioSysManager'));
+        if (!adminAtual || adminAtual.perfil !== 'admin') window.location.href = 'login.html';
+
+        let listaTecnicos = [];
+
+        async function carregarTelaCompleta() {
+            await carregarTecnicosGlobais();
+            await carregarFila();
+        }
+
+        async function carregarTecnicosGlobais() {
+            const res = await fetch('https://suporte-interno.onrender.com/api/tecnicos');
+            listaTecnicos = await res.json();
+            
+            const tbody = document.getElementById('tabela-tecnicos');
+            tbody.innerHTML = '';
+            listaTecnicos.forEach(t => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${t.nome}</strong></td>
+                        <td>
+                            <button class="btn-acao btn-editar" onclick="abrirModalEdicao(${t.id}, '${t.nome}')">Editar</button>
+                            <button class="btn-acao btn-excluir" onclick="abrirModalExclusao(${t.id})">Remover</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function fecharModal(idModal) { document.getElementById(idModal).classList.remove('ativo'); }
+
+        function abrirModalEdicao(id, nomeAtual) {
+            document.getElementById('edit-tec-id').value = id;
+            const inputNome = document.getElementById('edit-tec-nome');
+            inputNome.value = nomeAtual;
+            inputNome.classList.remove('input-erro'); 
+            const msgErro = document.getElementById('grupo-edicao').querySelector('.msg-erro-campo');
+            if(msgErro) msgErro.remove();
+            
+            document.getElementById('modal-edicao').classList.add('ativo');
+        }
+
+        async function confirmarEdicao() {
+            const id = document.getElementById('edit-tec-id').value;
+            const input = document.getElementById('edit-tec-nome');
+            const novoNome = input.value;
+            
+            const container = document.getElementById('grupo-edicao');
+            container.querySelectorAll('.msg-erro-campo').forEach(el => el.remove());
+            input.classList.remove('input-erro');
+
+            if (!novoNome.trim()) {
+                input.classList.add('input-erro');
+                const msg = document.createElement('span');
+                msg.className = 'msg-erro-campo';
+                msg.innerText = '* Por favor, preencha este campo.';
+                container.appendChild(msg);
+                return;
+            }
+
+            await fetch(`https://suporte-interno.onrender.com/api/tecnicos/${id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: novoNome })
+            });
+            fecharModal('modal-edicao');
+            mostrarAviso('Nome atualizado com sucesso.');
+            carregarTelaCompleta();
+        }
+
+        function abrirModalExclusao(id) {
+            document.getElementById('del-tec-id').value = id;
+            document.getElementById('modal-exclusao').classList.add('ativo');
+        }
+
+        async function confirmarExclusao() {
+            const id = document.getElementById('del-tec-id').value;
+            await fetch(`https://suporte-interno.onrender.com/api/tecnicos/${id}`, { method: 'DELETE' });
+            fecharModal('modal-exclusao');
+            mostrarAviso('Analista removido.', 'sucesso');
+            carregarTelaCompleta();
+        }
+
+        async function salvarTecnico() {
+            const input = document.getElementById('novo-tecnico');
+            const nome = input.value;
+            
+            const container = input.parentElement;
+            container.querySelectorAll('.msg-erro-campo').forEach(el => el.remove());
+            input.classList.remove('input-erro');
+
+            if (!nome.trim()) {
+                input.classList.add('input-erro');
+                const msg = document.createElement('span');
+                msg.className = 'msg-erro-campo';
+                msg.innerText = '* Por favor, preencha este campo.';
+                container.appendChild(msg);
+                return;
+            }
+
+            await fetch('https://suporte-interno.onrender.com/api/tecnicos', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome })
+            });
+
+            input.value = '';
+            sintetizarSomSucesso();
+            mostrarAviso('Analista registrado com sucesso!');
+            carregarTelaCompleta(); 
+        }
+
+        async function carregarFila() {
+            const res = await fetch('https://suporte-interno.onrender.com/api/chamados');
+            const chamados = await res.json();
+            const tbody = document.getElementById('tabela-admin');
+            tbody.innerHTML = '';
+            
+            chamados.forEach(c => {
+                let estaEncerrado = c.status === 'Resolvido';
+                let tagTravamento = estaEncerrado ? 'disabled' : '';
+                let corBotao = estaEncerrado ? '#475569' : '#10b981';
+                let textoBotao = estaEncerrado ? 'Encerrado' : 'Salvar';
+
+                let comboTecnicos = `<option value="" disabled ${!c.tecnico_atribuido ? 'selected' : ''}>Selecione na lista</option>`;
+                listaTecnicos.forEach(t => {
+                    comboTecnicos += `<option value="${t.nome}" ${c.tecnico_atribuido === t.nome ? 'selected' : ''}>${t.nome}</option>`;
+                });
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span style="color: var(--primary); font-weight: 600;">${c.setor}</span></td>
+                        <td><strong>${c.patrimonio}</strong> (${c.componente})<br><small style="color: #94a3b8">${c.descricao}</small></td>
+                        <td><select id="tec-${c.id}" ${tagTravamento}>${comboTecnicos}</select></td>
+                        <td>
+                            <select id="status-${c.id}" ${tagTravamento}>
+                                <option value="Aberto" disabled ${c.status === 'Aberto' ? 'selected' : ''}>Aberto (Novo)</option>
+                                <option value="Atribuído" ${c.status === 'Atribuído' ? 'selected' : ''}>Atribuido</option>
+                                <option value="Resolvido" ${c.status === 'Resolvido' ? 'selected' : ''}>Resolvido</option>
+                            </select>
+                        </td>
+                        <td><button onclick="atualizarChamado(${c.id})" ${tagTravamento} style="background-color: ${corBotao}">${textoBotao}</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function atualizarChamado(id) {
+            const tecnico = document.getElementById(`tec-${id}`).value;
+            const status = document.getElementById(`status-${id}`).value;
+
+            if (!tecnico && status !== 'Aberto') {
+                return mostrarAviso('Atribua um analista antes de mudar o status.', 'erro');
+            }
+
+            await fetch(`https://suporte-interno.onrender.com/api/chamados/${id}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tecnico_atribuido: tecnico, status: status })
+            });
+
+            sintetizarSomSucesso();
+            mostrarAviso('Chamado atribuido/atualizado com sucesso!');
+            carregarFila();
+        }
+
+        function sair() { localStorage.removeItem('usuarioSysManager'); window.location.href = 'login.html'; }
+        
+        window.onload = () => {
+            carregarTelaCompleta();
+            if (sessionStorage.getItem('loginRecente')) {
+                mostrarAviso('Login bem-sucedido!', 'sucesso');
+                sintetizarSomSucesso();
+                sessionStorage.removeItem('loginRecente');
+            }
+        };
+    </script>
+</body>
+</html>
