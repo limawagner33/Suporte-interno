@@ -41,7 +41,7 @@
 
         .aviso-toast { position: fixed; top: 20px; right: 20px; padding: 1rem 2rem; border-radius: 8px; color: white; font-weight: 500; box-shadow: 0 10px 15px rgba(0,0,0,0.3); transform: translateX(150%); transition: transform 0.3s ease; z-index: 99999; }
         .aviso-toast.show { transform: translateX(0); }
-        .bg-erro { background-color: #ef4444; } .bg-sucesso { background-color: #10b981; }
+        .bg-erro { background-color: #ef4444; } .bg-sucesso { background-color: #10b981; } .bg-info { background-color: var(--primary); }
 
         /* Modal / Sobretela */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: flex; justify-content: center; align-items: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(4px); padding: 1rem; box-sizing: border-box; }
@@ -76,15 +76,15 @@
             </div>
             <div class="modal-botoes">
                 <button class="btn-cancelar" onclick="fecharModal('modal-edicao')">Cancelar</button>
-                <button onclick="confirmarEdicao()">Salvar Alteracao</button>
+                <button onclick="confirmarEdicao()">Salvar Alteração</button>
             </div>
         </div>
     </div>
 
     <div id="modal-exclusao" class="modal-overlay">
         <div class="modal-box">
-            <h3>Confirmar Remocao</h3>
-            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Tem certeza que deseja remover este analista do sistema? Essa acao nao pode ser desfeita.</p>
+            <h3>Confirmar Remoção</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Tem certeza que deseja remover este analista do sistema? Essa ação nao pode ser desfeita.</p>
             <input type="hidden" id="del-tec-id">
             <div class="modal-botoes">
                 <button class="btn-cancelar" onclick="fecharModal('modal-exclusao')">Cancelar</button>
@@ -95,12 +95,12 @@
 
     <div class="container">
         <div class="header-flex">
-            <h2>Centro de Operacoes (NOC)</h2>
+            <h2>Centro de Operações (NOC)</h2>
             <button onclick="sair()" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; width: auto;">Finalizar Sessao</button>
         </div>
 
         <div class="card">
-            <h3 style="margin-top: 0;">Gestao de Equipe (Analistas)</h3>
+            <h3 style="margin-top: 0;">Gestão de Equipe (Analistas)</h3>
             
             <div class="cadastro-flex">
                 <div class="form-group">
@@ -111,7 +111,7 @@
 
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Nome do Tecnico</th><th>Acoes</th></tr></thead>
+                    <thead><tr><th>Nome do Técnico</th><th>Ações</th></tr></thead>
                     <tbody id="tabela-tecnicos"></tbody>
                 </table>
             </div>
@@ -121,7 +121,7 @@
             <h3 style="margin-top: 0;">Fila de Incidentes</h3>
             <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Origem</th><th>Ativo / Categoria</th><th>Atribuicao</th><th>Status</th><th>Acao</th></tr></thead>
+                    <thead><tr><th>Origem</th><th>Ativo / Categoria</th><th>Atribuição</th><th>Status</th><th>Ação</th></tr></thead>
                     <tbody id="tabela-admin"></tbody>
                 </table>
             </div>
@@ -132,7 +132,7 @@
         function mostrarAviso(msg, tipo = 'sucesso') {
             const toast = document.getElementById('container-aviso');
             toast.innerText = msg;
-            toast.className = `aviso-toast show ${tipo === 'erro' ? 'bg-erro' : 'bg-sucesso'}`;
+            toast.className = `aviso-toast show ${tipo === 'erro' ? 'bg-erro' : (tipo === 'info' ? 'bg-info' : 'bg-sucesso')}`;
             setTimeout(() => { toast.className = 'aviso-toast'; }, 4000);
         }
 
@@ -157,10 +157,11 @@
         if (!adminAtual || adminAtual.perfil !== 'admin') window.location.href = 'login.html';
 
         let listaTecnicos = [];
+        let ultimoIdConhecido = 0; 
 
         async function carregarTelaCompleta() {
             await carregarTecnicosGlobais();
-            await carregarFila();
+            await carregarFila(true); // O true indica que eh o primeiro load pra nao apitar a toa
         }
 
         async function carregarTecnicosGlobais() {
@@ -280,12 +281,23 @@
             } catch(e) { mostrarAviso('Erro de conexão.', 'erro'); }
         }
 
-        async function carregarFila() {
+        async function carregarFila(ehCarregamentoInicial = false) {
             try {
                 const res = await fetch('http://localhost:3000/api/chamados');
                 const chamados = await res.json();
                 const tbody = document.getElementById('tabela-admin');
                 tbody.innerHTML = '';
+                
+                // se o id do chamado mais recente for maior que o gravado na memoria, apita!
+                if (chamados.length > 0) {
+                    const maiorIdAtual = Math.max(...chamados.map(c => c.id));
+                    
+                    if (!ehCarregamentoInicial && ultimoIdConhecido > 0 && maiorIdAtual > ultimoIdConhecido) {
+                        sintetizarSomSucesso(); 
+                        mostrarAviso('Novo incidente registrado na fila!', 'info');
+                    }
+                    ultimoIdConhecido = maiorIdAtual; 
+                }
                 
                 chamados.forEach(c => {
                     let estaEncerrado = c.status === 'Resolvido';
@@ -317,6 +329,9 @@
             } catch(e) { console.error("Erro ao carregar chamados", e); }
         }
 
+        // DISPENSA O F5 (Atualiza a cada 3 segundos passando false para poder apitar)
+        setInterval(() => carregarFila(false), 3000);
+
         async function atualizarChamado(id) {
             const tecnico = document.getElementById(`tec-${id}`).value;
             const status = document.getElementById(`status-${id}`).value;
@@ -332,7 +347,7 @@
 
             sintetizarSomSucesso();
             mostrarAviso('Chamado atribuido/atualizado com sucesso!');
-            carregarFila();
+            carregarFila(true); // Evita apitar de novo só porque atualizou o status
         }
 
         function sair() { localStorage.removeItem('usuarioSysManager'); window.location.href = 'login.html'; }
@@ -344,9 +359,7 @@
                 sintetizarSomSucesso();
                 sessionStorage.removeItem('loginRecente');
             }
-        };
-        // Atualiza a fila do Admin em tempo real
-        setInterval(carregarFila, 3000);
+        };   
     </script>
 </body>
 </html>
